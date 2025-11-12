@@ -9,7 +9,7 @@
 ## 本地运行（不使用 Docker）
 1. 克隆仓库并进入目录：
 ```sh
-git clone <https://github.com/Peopyo/my-sre-portfolio.git>
+git clone https://github.com/Peopyo/my-sre-portfolio.git
 cd my-sre-portfolio
 ```
 2. 建议：创建并激活虚拟环境：
@@ -28,15 +28,20 @@ python3 app.py
 4. 在浏览器打开：http://localhost:5000
 
 ## 使用 Docker 运行
-1. 构建镜像：
+1. 克隆仓库并进入目录：
+```sh
+git clone https://github.com/Peopyo/my-sre-portfolio.git
+cd my-sre-portfolio
+```
+2. 构建镜像：
 ```sh
 docker build -t my-sre-portfolio .
 ```
-2. 运行容器并映射端口：
+3. 运行容器并映射端口：
 ```sh
 docker run -p 5000:5000 my-sre-portfolio
 ```
-3. 在浏览器打开：http://localhost:5000
+4. 在浏览器打开：http://localhost:5000
 
 ## 文件说明
 - [app.py](app.py) — Flask 应用主文件，包含 Flask 实例 [`app`](app.py) 和路由函数 [`home`](app.py)
