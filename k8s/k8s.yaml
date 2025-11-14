@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-sre-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-sre-app
+  template:
+    metadata:
+      labels:
+        app: my-sre-app
+    spec:
+      containers:
+      - name: flask-container
+        image: peopyo/my-sre-portfolio:ci
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-sre-service
+spec:
+  type: NodePort
+  selector:
+    app: my-sre-app
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+    nodePort: 30000
