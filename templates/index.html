@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Generate
+{% endblock %}
+
+
+{% block main %}
+    <form action="/" method="post">
+        <div class="mb-3">
+            <select autocomplete="off" class="form-select mx-auto w-auto" name="pattern">
+                <option disabled selected>Pattern</option>
+                <option VALUE="None">No Pattern</option>
+                <option VALUE="business_email">Business Email</option>
+                <option VALUE="product_description">Product Description</option>
+                <option VALUE="summary">Write Summary</option>
+                <option VALUE="work_report">Work Report</option>
+                <option VALUE="grammar_check">Grammar Check</option>
+            </select>
+        </div>
+        <br>
+        <div class="mb-3">
+            <textarea autocomplete="off" autofocus class="form-control" name="requirement"
+                      placeholder="Type Your Requirement Here" rows="3" required></textarea>
+        </div>
+        <br><br>
+        <button class="btn btn-primary" type="submit">Generate</button>
+    </form>
+{% endblock %}

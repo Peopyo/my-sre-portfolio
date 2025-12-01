@@ -1,2 +1,8 @@
-flask==2.3.0
 prometheus-client==0.17.0
+cs50
+flask
+flask-session
+openai
+python-dotenv
+requests
+werkzeug

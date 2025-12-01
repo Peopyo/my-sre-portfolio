@@ -1,0 +1,20 @@
+/* Size for brand */
+nav .navbar-brand
+{
+    font-size: xx-large;
+}
+
+table thead th {
+    font-size: 20px;
+}
+
+table tbody td {
+    font-size: 16px;
+}
+
+table td:nth-child(1),
+table td:nth-child(2),
+table td:nth-child(4){
+    vertical-align: middle;
+}
+

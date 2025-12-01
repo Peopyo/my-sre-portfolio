@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    History
+{% endblock %}
+
+
+{% block main %}
+    <form action="/history" method="post">
+        <div>
+            <input autocomplete="off" class="form-control mx-auto w-50" name="requirement"
+                   placeholder="Key word in your requirement" type="text">
+            <br>
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+    <hr>
+    <div>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Requirement</th>
+                    <th>Response</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for history in histories %}
+                    <tr>
+                        <td>{{ history.pattern }}</td>
+                        <td>{{ history.input }}</td>
+                        <td>{{ history.result }}</td>
+                        <td>{{ history.time }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
