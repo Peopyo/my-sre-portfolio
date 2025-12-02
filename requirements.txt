@@ -3,6 +3,7 @@ cs50
 flask
 flask-session
 openai
+pytest
 python-dotenv
 requests
 werkzeug

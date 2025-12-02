@@ -15,11 +15,18 @@ spec:
       containers:
       - name: flask-container
         image: peopyo/my-sre-portfolio:ci
+        imagePullPolicy: Always
         ports:
         - name: flask
           containerPort: 5000
         - name: prometheus
           containerPort: 8000
+        env:
+        - name: DEEPSEEK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: deepseek-api-key
+              key: DEEPSEEK_API_KEY 
 ---
 apiVersion: v1
 kind: Service

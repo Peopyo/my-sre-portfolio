@@ -1,12 +1,10 @@
 import os
-import requests
-
 from cs50 import SQL
 from dotenv import load_dotenv
-from flask import Flask, Response, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session
 from flask_session import Session
 from openai import OpenAI
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, start_http_server
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required
@@ -19,29 +17,27 @@ REQUEST_COUNT = Counter('request_count', 'Number of HTTP requests')
 
 # DeepSeek ai
 load_dotenv()
-url = "https://api.deepseek.com/v1/chat/completions"
-client = OpenAI(
-    api_key = os.getenv("DEEPSEEK_API_KEY"),
-    base_url = url)
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {client.api_key}"
-}
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 
+client = OpenAI(
+    api_key=os.getenv("DEEPSEEK_API_KEY"),
+    base_url=DEEPSEEK_BASE_URL
+)
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# SQL
-db_path = "WebGenerate.db"
-db_exists = os.path.exists(db_path)
-
-db = SQL(f"sqlite:///{db_path}")
-
-if not db_exists:
-    # Create users table
+if os.environ.get("CI_TEST_ENV") == "true":
+    # 场景：GitHub Actions 测试环境
+    db_path = "ci_test.db"
+    
+    open(db_path, 'w').close()
+    
+    db = SQL(f"sqlite:///{db_path}")
+    
+    # 手动建表
     db.execute("""
     CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,8 +45,6 @@ if not db_exists:
         hash TEXT NOT NULL
     )
     """)
-
-    # Create histories table
     db.execute("""
     CREATE TABLE histories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,6 +56,42 @@ if not db_exists:
         FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
+
+else:
+    # 场景：本地或生产环境
+    db_path = "WebGenerate.db"
+    
+    # 确保文件存在
+    if not os.path.exists(db_path):
+        open(db_path, 'a').close()
+
+    db = SQL(f"sqlite:///{db_path}")
+
+    # 如果数据库文件是空的，手动建表
+    if os.path.getsize(db_path) == 0:
+        try:
+            db.execute("SELECT * FROM users LIMIT 1")
+        except:
+             # Create users table
+            db.execute("""
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                hash TEXT NOT NULL
+            )
+            """)
+            # Create histories table
+            db.execute("""
+            CREATE TABLE histories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                pattern TEXT NOT NULL,
+                input TEXT NOT NULL,
+                result TEXT NOT NULL,
+                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """)
 
 PATTERNS = {
     "business_email": "Generate the following content in the format of business email:",
@@ -106,23 +136,21 @@ def index():
         else:
             message = f"{PATTERNS[pattern]}\n\n{requirement}"
 
-
-
         # Generate and post result in /generate
-        data = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "user", "content": message}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 1024
-        }
-
         try:
-            response = requests.post(url, json=data, headers=headers)
-            response.raise_for_status()
-            response = response.json()["choices"][0]["message"]["content"]
-        except requests.exceptions.RequestException as e:
+            completion = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "user", "content": message}
+                ],
+                temperature=0.7,
+                max_tokens=1024
+            )
+            # get response content
+            response = completion.choices[0].message.content
+            
+        except Exception as e:
+            # capture all exceptions
             return apology(f"API failed: {e}", 400)
 
         session["last_pattern"] = pattern
@@ -150,20 +178,19 @@ def generate():
         requirement = session["last_requirement"]
         message = session["last_message"]
 
-        data = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "user", "content": message}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 1024
-        }
-
+        # 修复：这里原来是旧的 requests 代码，现在统一使用 client
         try:
-            response = requests.post(url, json=data, headers=headers)
-            response.raise_for_status()
-            response = response.json()["choices"][0]["message"]["content"]
-        except requests.exceptions.RequestException as e:
+            completion = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "user", "content": message}
+                ],
+                temperature=0.7,
+                max_tokens=1024
+            )
+            response = completion.choices[0].message.content
+
+        except Exception as e:
             return apology(f"API failed: {e}", 400)
 
         session["last_response"] = response
@@ -293,9 +320,6 @@ def register():
     else:
         return render_template("register.html")
     
-@app.route("/metrics")
-def metrics():
-    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
 if __name__ == "__main__":
+    start_http_server(8000)
     app.run(host="0.0.0.0", port=5000)
