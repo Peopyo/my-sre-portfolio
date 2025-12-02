@@ -105,12 +105,6 @@ PATTERNS = {
 def after_request(response):
     """Ensure responses aren't cached"""
 
-    # Prometheus request count
-    try:
-        REQUEST_COUNT.inc()
-    except Exception:
-        pass
-    
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
@@ -120,6 +114,7 @@ def after_request(response):
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
+    REQUEST_COUNT.inc()
     requirement = request.form.get("requirement")
     pattern = request.form.get("pattern")
 
@@ -171,6 +166,7 @@ def index():
 @app.route("/generate", methods=["GET", "POST"])
 @login_required
 def generate():
+    REQUEST_COUNT.inc()
     # Regenerate
     if request.method == "POST":
 
@@ -208,6 +204,7 @@ def generate():
 @app.route("/history", methods=["GET", "POST"])
 @login_required
 def history():
+    REQUEST_COUNT.inc()
     # Search
     if request.method == "POST":
         requirement = request.form.get("requirement")
@@ -230,11 +227,13 @@ def history():
 @app.route("/result")
 @login_required
 def result():
+    REQUEST_COUNT.inc()
     return render_template("result.html")
 
 # Log in
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    REQUEST_COUNT.inc()
     """Log user in"""
 
     # Forget any user_id
@@ -274,6 +273,7 @@ def login():
 # Log out
 @app.route("/logout")
 def logout():
+    REQUEST_COUNT.inc()
     """Log user out"""
 
     # Forget any user_id
@@ -285,6 +285,7 @@ def logout():
 # Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    REQUEST_COUNT.inc()
 
     if request.method == "POST":
         username = request.form.get("username")
